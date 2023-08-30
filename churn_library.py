@@ -9,7 +9,6 @@ This module implements the main script for the customer churn project with clean
 # import libraries
 import os
 
-from sklearn.preprocessing import normalize
 from sklearn.model_selection import train_test_split
 
 from sklearn.linear_model import LogisticRegression
@@ -18,7 +17,6 @@ from sklearn.model_selection import GridSearchCV
 
 from sklearn.metrics import plot_roc_curve, classification_report
 
-import shap
 import joblib
 import pandas as pd
 import numpy as np
@@ -41,6 +39,10 @@ def import_data(pth):
     data_frame = pd.read_csv(pth)
     data_frame['Churn'] = data_frame['Attrition_Flag'].apply(
         lambda val: 0 if val == "Existing Customer" else 1)
+
+    data_frame.drop('Attrition_Flag', axis=1, inplace=True)
+    data_frame.drop('CLIENTNUM', axis=1, inplace=True)
+    
     return data_frame
 
 
@@ -75,7 +77,7 @@ def perform_eda(data_frame):
     plt.close()
 
 
-def encoder_helper(df, category_lst, response):
+def encoder_helper(data_frame, category_lst, response):
     '''
     helper function to turn each categorical column into a new column with
     propotion of churn for each category - associated with cell 15 from the notebook
@@ -89,13 +91,21 @@ def encoder_helper(df, category_lst, response):
     output:
             df: pandas dataframe with new columns for
     '''
-    pass
+    for category in category_lst:
+        category_groups = data_frame.groupby(category).mean()[response]
+        new_feature = f"{category}_{response}"
+        data_frame[new_feature] = data_frame[category].apply(
+            lambda x: category_groups.loc[x])
+
+    data_frame.drop(category_lst, axis=1, inplace=True)
+
+    return data_frame
 
 
-def perform_feature_engineering(df, response):
+def perform_feature_engineering(data_frame, response):
     '''
     input:
-              df: pandas dataframe
+              data_frame: pandas dataframe
               response: string of response name [optional argument that could
               be used for naming variables or index y column]
 
@@ -105,6 +115,79 @@ def perform_feature_engineering(df, response):
               y_train: y training data
               y_test: y testing data
     '''
+    # Collect categorical features to be encoded
+    cat_columns = data_frame.select_dtypes(include='object').columns.tolist()
+
+    # Encode categorical features using mean of response variable on category
+    data_frame = encoder_helper(data_frame, cat_columns, response)
+
+    y = data_frame[response]
+    X = data_frame.drop(response, axis=1)
+
+    # train test split
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.3, random_state=42)
+
+    return X_train, X_test, y_train, y_test
+
+
+def plot_classification_report(model_name,
+                               y_train,
+                               y_test,
+                               y_train_preds,
+                               y_test_preds):
+    '''
+    produces classification report for training and testing results and stores
+    report as image in images folder
+
+    input:
+                    model_name: (str) name of the model, ie 'Random Forest'
+                    y_train: training response values
+                    y_test:  test response values
+                    y_train_preds: training predictions from model_name
+                    y_test_preds: test predictions from model_name
+
+    output:
+                     None
+    '''
+
+    plt.rc('figure', figsize=(5, 5))
+
+    # Plot Classification report on Train dataset
+    plt.text(0.01, 1.25,
+             str(f'{model_name} Train'),
+             {'fontsize': 10},
+             fontproperties='monospace'
+             )
+    plt.text(0.01, 0.05,
+             str(classification_report(y_train, y_train_preds)),
+             {'fontsize': 10},
+             fontproperties='monospace'
+             )
+
+    # Plot Classification report on Test dataset
+    plt.text(0.01, 0.6,
+             str(f'{model_name} Test'),
+             {'fontsize': 10},
+             fontproperties='monospace'
+             )
+    plt.text(0.01, 0.7,
+             str(classification_report(y_test, y_test_preds)),
+             {'fontsize': 10},
+             fontproperties='monospace'
+             )
+
+    plt.axis('off')
+
+    # Save figure to ./images folder
+    fig_name = f'Classification_report_{model_name}.png'
+    plt.savefig(
+        os.path.join(
+            "./images/results",
+            fig_name)
+    )
+
+    plt.close()
 
 
 def classification_report_image(y_train,
@@ -127,7 +210,19 @@ def classification_report_image(y_train,
     output:
              None
     '''
-    pass
+    plot_classification_report('Logistic Regression',
+                               y_train,
+                               y_test,
+                               y_train_preds_lr,
+                               y_test_preds_lr)
+    plt.close()
+
+    plot_classification_report('Random Forest',
+                               y_train,
+                               y_test,
+                               y_train_preds_rf,
+                               y_test_preds_rf)
+    plt.close()
 
 
 def feature_importance_plot(model, X_data, output_pth):
@@ -141,7 +236,31 @@ def feature_importance_plot(model, X_data, output_pth):
     output:
              None
     '''
-    pass
+    # Calculate feature importances
+    importances = model.feature_importances_
+    # Sort feature importances in descending order
+    indices = np.argsort(importances)[::-1]
+
+    # Rearrange feature names so they match the sorted feature importances
+    names = [X_data.columns[i] for i in indices]
+
+    # Create plot
+    plt.figure(figsize=(20, 5))
+
+    # Create plot title
+    plt.title("Feature Importance")
+    plt.ylabel('Importance')
+
+    # Add bars
+    plt.bar(range(X_data.shape[1]), importances[indices])
+
+    # Add feature names as x-axis labels
+    plt.xticks(range(X_data.shape[1]), names, rotation=90)
+
+    # Save figure to output_pth
+    plt.savefig(os.path.join(output_pth, "Feature_Importance.png"))
+
+    plt.close()
 
 
 def train_models(X_train, X_test, y_train, y_test):
@@ -155,14 +274,76 @@ def train_models(X_train, X_test, y_train, y_test):
     output:
               None
     '''
-    pass
+    # grid search
+    rfc = RandomForestClassifier(random_state=42)
+    # Use a different solver if the default 'lbfgs' fails to converge
+    # Reference:
+    # https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+    lrc = LogisticRegression(solver='lbfgs', max_iter=3000)
+
+    param_grid = {
+        'n_estimators': [200, 500],
+        'max_features': ['auto', 'sqrt'],
+        'max_depth': [4, 5, 100],
+        'criterion': ['gini', 'entropy']
+    }
+
+    cv_rfc = GridSearchCV(estimator=rfc, param_grid=param_grid, cv=5)
+    cv_rfc.fit(X_train, y_train)
+
+    lrc.fit(X_train, y_train)
+
+    y_train_preds_rf = cv_rfc.best_estimator_.predict(X_train)
+    y_test_preds_rf = cv_rfc.best_estimator_.predict(X_test)
+
+    y_train_preds_lr = lrc.predict(X_train)
+    y_test_preds_lr = lrc.predict(X_test)
+
+    classification_report_image(y_train,
+                                y_test,
+                                y_train_preds_lr,
+                                y_train_preds_rf,
+                                y_test_preds_lr,
+                                y_test_preds_rf)
+
+    # plot ROC-curves
+    plt.figure(figsize=(15, 8))
+    ax = plt.gca()
+    plot_roc_curve(
+        cv_rfc.best_estimator_,
+        X_test,
+        y_test,
+        ax=ax,
+        alpha=0.8
+    )
+
+    plot_roc_curve(lrc, X_test, y_test, ax=ax, alpha=0.8)
+
+    # save ROC-curves to images directory
+    plt.savefig(
+        os.path.join(
+            "./images/results",
+            'ROC_curves.png'),
+        bbox_inches='tight')
+    plt.close()
+
+    # save best model
+    joblib.dump(cv_rfc.best_estimator_, './models/rfc_model.pkl')
+    joblib.dump(lrc, './models/logistic_model.pkl')
+
+    # Display feature importance on train data
+    feature_importance_plot(cv_rfc.best_estimator_,
+                            X_train,
+                            'Random_Forest',
+                            "./images/results")
 
 
-def main(pth):
+def main(pth, response):
     """
     the main function that execute the hole process
     input:
             pth: a path to the csv
+            response: string of response name
     output:
               None
     """
@@ -170,6 +351,8 @@ def main(pth):
 
     perform_eda(dataframe)
 
+    train_models(*perform_feature_engineering(dataframe, response))
+
 
 if __name__ == "__main__":
-    main("./data/bank_data.csv")
+    main("./data/bank_data.csv", "Churn")
