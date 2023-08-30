@@ -42,7 +42,7 @@ def import_data(pth):
 
     data_frame.drop('Attrition_Flag', axis=1, inplace=True)
     data_frame.drop('CLIENTNUM', axis=1, inplace=True)
-    
+
     return data_frame
 
 
@@ -210,14 +210,14 @@ def classification_report_image(y_train,
     output:
              None
     '''
-    plot_classification_report('Logistic Regression',
+    plot_classification_report('Logistic_Regression',
                                y_train,
                                y_test,
                                y_train_preds_lr,
                                y_test_preds_lr)
     plt.close()
 
-    plot_classification_report('Random Forest',
+    plot_classification_report('Random_Forest',
                                y_train,
                                y_test,
                                y_train_preds_rf,
@@ -275,11 +275,11 @@ def train_models(X_train, X_test, y_train, y_test):
               None
     '''
     # grid search
-    rfc = RandomForestClassifier(random_state=42)
+    rfc = RandomForestClassifier(random_state=42, n_jobs=-1)
     # Use a different solver if the default 'lbfgs' fails to converge
     # Reference:
     # https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
-    lrc = LogisticRegression(solver='lbfgs', max_iter=3000)
+    lrc = LogisticRegression(solver='lbfgs', max_iter=3000, n_jobs=-1)
 
     param_grid = {
         'n_estimators': [200, 500],
@@ -288,7 +288,8 @@ def train_models(X_train, X_test, y_train, y_test):
         'criterion': ['gini', 'entropy']
     }
 
-    cv_rfc = GridSearchCV(estimator=rfc, param_grid=param_grid, cv=5)
+    cv_rfc = GridSearchCV(estimator=rfc, param_grid=param_grid,
+                          cv=5, n_jobs=-1)
     cv_rfc.fit(X_train, y_train)
 
     lrc.fit(X_train, y_train)
@@ -334,7 +335,6 @@ def train_models(X_train, X_test, y_train, y_test):
     # Display feature importance on train data
     feature_importance_plot(cv_rfc.best_estimator_,
                             X_train,
-                            'Random_Forest',
                             "./images/results")
 
 
