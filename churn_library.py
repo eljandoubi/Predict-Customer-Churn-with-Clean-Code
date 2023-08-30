@@ -1,13 +1,14 @@
 # library doc string
 """
+This module implements the main script for the customer churn project with clean code
 Author: Abdelkarim Eljandoubi
 Date: August, 2023
-This module implements the main script for the customer churn project with clean code
 """
 
 
 # import libraries
 import os
+import logging
 
 from sklearn.model_selection import train_test_split
 
@@ -22,7 +23,18 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+
 sns.set()
+
+logging.basicConfig(
+    filename='./logs/churn_library.log',
+    level = logging.INFO,
+    filemode='w',
+    format='%(filename)s - %(levelname)s - %(message)s',
+    )
+
+main_logger = logging.getLogger("churn_library")
 
 os.environ['QT_QPA_PLATFORM'] = 'offscreen'
 
@@ -36,6 +48,9 @@ def import_data(pth):
     output:
             data_frame: pandas dataframe
     '''
+    
+    main_logger.info("importing data from %s",pth)
+    
     data_frame = pd.read_csv(pth)
     data_frame['Churn'] = data_frame['Attrition_Flag'].apply(
         lambda val: 0 if val == "Existing Customer" else 1)
@@ -55,6 +70,9 @@ def perform_eda(data_frame):
     output:
             None
     '''
+    
+    main_logger.info("performing EDA")
+    
     for col in ['Churn', 'Customer_Age']:
         plt.figure(figsize=(20, 10))
         data_frame[col].hist()
@@ -75,6 +93,8 @@ def perform_eda(data_frame):
     sns.heatmap(data_frame.corr(), annot=False, cmap='Dark2_r', linewidths=2)
     plt.savefig("./images/eda/heatmap_corr.png")
     plt.close()
+    
+    main_logger.info("Figures are saved")
 
 
 def encoder_helper(data_frame, category_lst, response):
@@ -91,6 +111,9 @@ def encoder_helper(data_frame, category_lst, response):
     output:
             df: pandas dataframe with new columns for
     '''
+    
+    main_logger.info("encoding categorical columns : %s",category_lst)
+    
     for category in category_lst:
         category_groups = data_frame.groupby(category).mean()[response]
         new_feature = f"{category}_{response}"
@@ -115,6 +138,9 @@ def perform_feature_engineering(data_frame, response):
               y_train: y training data
               y_test: y testing data
     '''
+    
+    main_logger.info("performing feature engineering")
+    
     # Collect categorical features to be encoded
     cat_columns = data_frame.select_dtypes(include='object').columns.tolist()
 
@@ -123,7 +149,9 @@ def perform_feature_engineering(data_frame, response):
 
     y = data_frame[response]
     X = data_frame.drop(response, axis=1)
-
+    
+    main_logger.info("splitting data")
+    
     # train test split
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.3, random_state=42)
@@ -150,6 +178,8 @@ def plot_classification_report(model_name,
     output:
                      None
     '''
+    
+    main_logger.info("plot classification report of %s",model_name)
 
     plt.rc('figure', figsize=(5, 5))
 
@@ -188,6 +218,7 @@ def plot_classification_report(model_name,
     )
 
     plt.close()
+    
 
 
 def classification_report_image(y_train,
@@ -236,6 +267,9 @@ def feature_importance_plot(model, X_data, output_pth):
     output:
              None
     '''
+    
+    main_logger.info("plot featre importance")
+    
     # Calculate feature importances
     importances = model.feature_importances_
     # Sort feature importances in descending order
@@ -274,6 +308,9 @@ def train_models(X_train, X_test, y_train, y_test):
     output:
               None
     '''
+    
+    main_logger.info("train models...")
+    
     # grid search
     rfc = RandomForestClassifier(random_state=42, n_jobs=-1)
     # Use a different solver if the default 'lbfgs' fails to converge
@@ -293,6 +330,8 @@ def train_models(X_train, X_test, y_train, y_test):
     cv_rfc.fit(X_train, y_train)
 
     lrc.fit(X_train, y_train)
+    
+    main_logger.info("predict with models")
 
     y_train_preds_rf = cv_rfc.best_estimator_.predict(X_train)
     y_test_preds_rf = cv_rfc.best_estimator_.predict(X_test)
@@ -306,6 +345,8 @@ def train_models(X_train, X_test, y_train, y_test):
                                 y_train_preds_rf,
                                 y_test_preds_lr,
                                 y_test_preds_rf)
+
+    main_logger.info("plot roc curves")
 
     # plot ROC-curves
     plt.figure(figsize=(15, 8))
@@ -327,6 +368,8 @@ def train_models(X_train, X_test, y_train, y_test):
             'ROC_curves.png'),
         bbox_inches='tight')
     plt.close()
+
+    main_logger.info("save models")
 
     # save best model
     joblib.dump(cv_rfc.best_estimator_, './models/rfc_model.pkl')
@@ -352,6 +395,8 @@ def main(pth, response):
     perform_eda(dataframe)
 
     train_models(*perform_feature_engineering(dataframe, response))
+    
+    main_logger.info("execution terminated successfully")
 
 
 if __name__ == "__main__":

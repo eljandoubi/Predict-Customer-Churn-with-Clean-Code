@@ -1,0 +1,9 @@
+churn_library.py - INFO - importing data from ./data/bank_data.csv
+churn_script_logging_and_tests.py - INFO - Testing import_data: SUCCESS
+churn_library.py - INFO - performing EDA
+churn_library.py - INFO - Figures are saved
+churn_script_logging_and_tests.py - INFO - Testing perform_eda: SUCCESS
+churn_script_logging_and_tests.py - INFO - File Churn_dist.png was found
+churn_script_logging_and_tests.py - INFO - File Customer_Age_dist.png was found
+churn_library.py - INFO - encoding categorical columns : ['Gender', 'Education_Level', 'Marital_Status', 'Income_Category', 'Card_Category']
+churn_script_logging_and_tests.py - INFO - Testing encoder_helper: SUCCESS

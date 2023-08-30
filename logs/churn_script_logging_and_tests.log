@@ -1,0 +1,8 @@
+/home/a/Predict-Customer-Churn-with-Clean-Code/churn_library.py - INFO - importing data from ./data/bank_data.csv
+/home/a/Predict-Customer-Churn-with-Clean-Code/churn_script_logging_and_tests.py - INFO - Testing import_data: SUCCESS
+/home/a/Predict-Customer-Churn-with-Clean-Code/churn_library.py - INFO - performing EDA
+/home/a/Predict-Customer-Churn-with-Clean-Code/churn_library.py - INFO - Figures are saved
+/home/a/Predict-Customer-Churn-with-Clean-Code/churn_script_logging_and_tests.py - INFO - Testing perform_eda: SUCCESS
+/home/a/Predict-Customer-Churn-with-Clean-Code/churn_script_logging_and_tests.py - INFO - File Churn_dist.png was found
+/home/a/Predict-Customer-Churn-with-Clean-Code/churn_script_logging_and_tests.py - INFO - File Customer_Age_dist.png was found
+/home/a/Predict-Customer-Churn-with-Clean-Code/churn_script_logging_and_tests.py - ERROR - executing encoder_helper produces the error : encoder_helper() missing 3 required positional arguments: 'data_frame', 'category_lst', and 'response'
