@@ -27,14 +27,22 @@ import seaborn as sns
 
 sns.set()
 
-logging.basicConfig(
-    filename='./logs/churn_library.log',
-    level = logging.INFO,
-    filemode='w',
-    format='%(filename)s - %(levelname)s - %(message)s',
-    )
 
 main_logger = logging.getLogger("churn_library")
+
+main_logger.setLevel(logging.INFO)
+
+main_formatter = logging.Formatter('%(filename)s - %(levelname)s - %(message)s')
+
+main_file_handler = logging.FileHandler('./logs/churn_library.log', mode="w")
+main_file_handler.setLevel(logging.INFO)
+main_file_handler.setFormatter(main_formatter)
+
+main_stream_handler = logging.StreamHandler()
+main_stream_handler.setFormatter(main_formatter)
+
+main_logger.addHandler(main_file_handler)
+main_logger.addHandler(main_stream_handler)
 
 os.environ['QT_QPA_PLATFORM'] = 'offscreen'
 

@@ -10,14 +10,23 @@ import pytest
 import numpy as np
 import churn_library as cl
 
-logging.basicConfig(
-    filename='./logs/churn_script_logging_and_tests.log',
-    level = logging.INFO,
-    filemode='w',
-    format='%(name)s - %(levelname)s - %(message)s',
-    )
 
 test_logger = logging.getLogger("churn_script_logging_and_tests")
+
+test_logger.setLevel(logging.INFO)
+
+test_formatter = logging.Formatter('%(filename)s - %(levelname)s - %(message)s')
+
+test_file_handler = logging.FileHandler(
+    './logs/churn_script_logging_and_tests.log', mode="w")
+test_file_handler.setLevel(logging.INFO)
+test_file_handler.setFormatter(test_formatter)
+
+test_stream_handler = logging.StreamHandler()
+test_stream_handler.setFormatter(test_formatter)
+
+test_logger.addHandler(test_file_handler)
+test_logger.addHandler(test_stream_handler)
 
 @pytest.mark.parametrize("import_data", [cl.import_data])
 def test_import(import_data):
