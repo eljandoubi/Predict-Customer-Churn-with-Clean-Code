@@ -2,7 +2,7 @@
 
 ## Description
 
-This project is Clean Code Principles. 
+This project is about Clean Code Principles. 
 The problem is to predict credit card customers that are most likely to churn using clean code best practices.
 
 ## Prerequisites
