@@ -175,19 +175,25 @@ def test_train_models(train_models):
             "Executing train_models produces the error : %s", err)
         raise err
 
-    for file in ['Churn_dist.png', 'Customer_Age_dist.png',
-                "Marital_Status_value_counts_dist.png",
-                "Total_Trans_Ct_density.png",
-                "heatmap_corr.png"]:
+    for file in ['Classification_report_Random_Forest.png',
+                 'Classification_report_Logistic_Regression.png',
+                 'ROC_curves.png', 'Feature_Importance.png',
+                 'rfc_model.pkl', 'logistic_model.pkl']:
+
+        if file.endswith(".png"):
+            path = f"./images/results/{file}"
+        else:
+            path = f"./models/{file}"
 
         try:
-            path = f"./images/eda/{file}" if file.endswith(".png") else ""
+
             assert os.path.isfile(path)
             test_logger.info('File %s was found', file)
 
         except AssertionError as err:
             test_logger.error('File %s was not found', file)
             raise err
+
 
 if __name__ == "__main__":
     pytest.main(args=['-s', os.path.abspath(__file__)])
