@@ -2,3 +2,13 @@ churn_library.py - INFO - importing data from ./data/bank_data.csv
 churn_library.py - INFO - performing EDA
 churn_library.py - INFO - Figures are saved
 churn_library.py - INFO - encoding categorical columns : ['Gender', 'Education_Level', 'Marital_Status', 'Income_Category', 'Card_Category']
+churn_library.py - INFO - performing feature engineering
+churn_library.py - INFO - encoding categorical columns : []
+churn_library.py - INFO - splitting data
+churn_library.py - INFO - train models...
+churn_library.py - INFO - predict with models
+churn_library.py - INFO - plot classification report of Logistic_Regression
+churn_library.py - INFO - plot classification report of Random_Forest
+churn_library.py - INFO - plot roc curves
+churn_library.py - INFO - save models
+churn_library.py - INFO - plot featre importance
